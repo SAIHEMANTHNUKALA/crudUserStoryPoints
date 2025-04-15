@@ -1,5 +1,5 @@
 spring:
   data:
     mongodb:
-      uri: mongodb+srv://admin:12345@mongocrud.5sftmxp.mongodb.net/?retryWrites=true&w=majority&appName=MongoCRUD
-      database: Task
+      uri: ${MONGO_URI}
+      database: ${MONGO_DB_NAME}
