@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    IMAGE_TAG: "latest"  # This is safe to hardcode
+    IMAGE_TAG: "latest"
 
 phases:
   install:
@@ -21,7 +21,7 @@ phases:
       - echo "Logging in to Amazon ECR..."
       - REPOSITORY_URI=$ECR_REPOSITORY_URI
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
-      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+      - "IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F\":\" '{print $2}')"
       - echo "Image tag: $IMAGE_TAG"
 
   build:
@@ -45,6 +45,7 @@ phases:
 artifacts:
   files:
     - imagedefinitions.json
+
 
 
 
