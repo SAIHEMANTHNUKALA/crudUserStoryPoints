@@ -1,34 +1,43 @@
 version: 0.2
 
+env:
+  variables:
+    IMAGE_TAG: "latest"
+    DOCKER_CONTAINER_NAME: "course-service" # Update this if needed
+
 phases:
+  install:
+    runtime-versions:
+      java: corretto17
+    commands:
+      - echo Installing Maven Dependencies...
+
   pre_build:
     commands:
-      - mvn clean install
+      - echo Building JAR using Maven...
+      - mvn clean install -DskipTests
       - echo Logging in to Amazon ECR...
       - aws --version
       - REPOSITORY_URI=$ECR_REPOSITORY_URI
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - echo Commit Hash: $CODEBUILD_RESOLVED_SOURCE_VERSION
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+
   build:
     commands:
       - echo Build started on `date`
-      - echo Building the Docker image...
+      - echo Building Docker image...
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Pushing the Docker images...
+      - echo Pushing Docker images to ECR...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Writing image definitions file...
-      - printf '[{"name":"course-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      - echo Writing image definitions file...
-      # add your container name
-      - DOCKER_CONTAINER_NAME=$DOCKER_CON_NAME
-      - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      - echo $DOCKER_CONTAINER_NAME
+      - echo Creating imagedefinitions.json...
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$DOCKER_CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
       - echo printing imagedefinitions.json
       - cat imagedefinitions.json
 
@@ -37,35 +46,43 @@ artifacts:
     - imagedefinitions.json
     - target/crud.jar
 
-#version: 0.2
+
+
+#version: 0.2 previous version
 #
 #phases:
-#  install:
-#    runtime-versions:
-#      java: corretto17
 #  pre_build:
 #    commands:
-#      - echo "🛠️ Running Maven build..."
-#      - - mvn clean package -DskipTests
-#      - echo "🔐 Logging into Amazon ECR..."
-#      - REPOSITORY_URI=101906981558.dkr.ecr.us-east-1.amazonaws.com/cruduserstory-registry
+#      - mvn clean install
+#      - echo Logging in to Amazon ECR...
+#      - aws --version
+#      - REPOSITORY_URI=$ECR_REPOSITORY_URI
 #      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
 #      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 #      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
 #  build:
 #    commands:
-#      - echo "📦 Building Docker image..."
+#      - echo Build started on `date`
+#      - echo Building the Docker image...
 #      - docker build -t $REPOSITORY_URI:latest .
 #      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 #  post_build:
 #    commands:
-#      - echo "✅ Build complete, pushing image..."
+#      - echo Build completed on `date`
+#      - echo Pushing the Docker images...
 #      - docker push $REPOSITORY_URI:latest
 #      - docker push $REPOSITORY_URI:$IMAGE_TAG
-#      - echo "📝 Generating imagedefinitions.json..."
-#      - printf '[{"name":"cruduserstory-registry","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+#      - echo Writing image definitions file...
+#      - printf '[{"name":"course-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+#      - echo Writing image definitions file...
+#      # add your container name
+#      - DOCKER_CONTAINER_NAME=$DOCKER_CON_NAME
+#      - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+#      - echo $DOCKER_CONTAINER_NAME
+#      - echo printing imagedefinitions.json
 #      - cat imagedefinitions.json
 #
 #artifacts:
 #  files:
 #    - imagedefinitions.json
+#    - target/crud.jar
