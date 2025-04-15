@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     IMAGE_TAG: "latest"
-    DOCKER_CONTAINER_NAME: "course-service"
+    DOCKER_CONTAINER_NAME: "userstory-service"
 
 phases:
   install:
